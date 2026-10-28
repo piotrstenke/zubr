@@ -144,9 +144,9 @@ internal sealed class DeclarationTreeBuilder : SyntaxVisitor<SingleDeclaration>
 	{
 		DiagnosticBag diagnostics = new();
 
-		if (node.Arity == 0)
+		if (node.Arity == 0 && node.ConstraintList.Any())
 		{
-			diagnostics.Push(ErrorCode.ERR_NonGenericConstraints, _tree.GetLocation(node.ConstraintList[0].Where));
+			diagnostics.Push(ErrorCode.ERR_NonGenericConstraints, _tree.GetLocation(node.ConstraintList.First().Where));
 		}
 
 		DeclarationModifiers modifiers = GetModifiers(node.Modifiers, diagnostics);
@@ -165,9 +165,9 @@ internal sealed class DeclarationTreeBuilder : SyntaxVisitor<SingleDeclaration>
 	{
 		DiagnosticBag diagnostics = new();
 
-		if(node.Arity == 0)
+		if(node.Arity == 0 && node.ConstraintList.Any())
 		{
-			diagnostics.Push(ErrorCode.ERR_NonGenericConstraints, _tree.GetLocation(node.ConstraintList[0].Where));
+			diagnostics.Push(ErrorCode.ERR_NonGenericConstraints, _tree.GetLocation(node.ConstraintList.First().Where));
 		}
 
 		DeclarationModifiers modifiers = GetModifiers(node.Modifiers, diagnostics);
