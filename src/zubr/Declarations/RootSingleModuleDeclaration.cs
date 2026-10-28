@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using Zubr.Collections;
+using Zubr.Diagnostics;
 
 namespace Zubr.Declarations;
 
@@ -13,8 +14,9 @@ internal sealed class RootSingleModuleDeclaration : SingleModuleDeclaration
 		SyntaxRef @ref,
 		bool hasUses,
 		bool hasTopUses,
-		ImmutableArray<SingleDeclaration> children
-	) : base(name, @ref, @ref.Location, children)
+		ConstArray<SingleDeclaration> children,
+		ConstArray<Diagnostic> diagnostics
+	) : base(name, @ref, @ref.Location, children, diagnostics)
 	{
 		HasUses = hasUses;
 		HasTopUses = hasTopUses;

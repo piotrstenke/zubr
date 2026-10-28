@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Zubr.Collections;
+using Zubr.Declarations;
 using Zubr.Diagnostics;
 using Zubr.Emit;
 
@@ -8,7 +10,7 @@ namespace Zubr;
 
 public sealed class Compilation
 {
-	private DiagnosticMessage[]? _diagnostics;
+	private Diagnostic[]? _diagnostics;
 	private bool _hasCheckedDiagnostics;
 	private bool _hasErrors;
 
@@ -72,14 +74,14 @@ public sealed class Compilation
 		Options = options;
 	}
 
-	public DiagnosticMessage[] GetDiagnostics()
+	public Diagnostic[] GetDiagnostics()
 	{
 		if (_diagnostics is not null)
 		{
 			return _diagnostics.ToArray();
 		}
 
-		DiagnosticMessage[] diagnostics = FetchDiagnostics();
+		Diagnostic[] diagnostics = FetchSyntaxTreeDiagnostics();
 
 		if (diagnostics.Length == 0)
 		{
@@ -175,9 +177,25 @@ public sealed class Compilation
 		return new(this);
 	}
 
+	private void AnalyzeTrees()
+	{
+		foreach (SyntaxTree tree in SyntaxTrees)
+		{
+			Analyze(tree);
+		}
+	}
+
+	private static ConstArray<Diagnostic> Analyze(SyntaxTree tree)
+	{
+		RootSingleModuleDeclaration root = DeclarationTreeBuilder.Build(tree);
+		return root.Diagnostics;
+	}
+
 	private void InitDiagnostics()
 	{
-		DiagnosticMessage[] diagnostics = FetchDiagnostics();
+		Diagnostic[] diagnostics = FetchSyntaxTreeDiagnostics();
+
+		AnalyzeTrees();
 
 		if (diagnostics.Length == 0)
 		{
@@ -187,9 +205,9 @@ public sealed class Compilation
 		_diagnostics = diagnostics;
 	}
 
-	private DiagnosticMessage[] FetchDiagnostics()
+	private Diagnostic[] FetchSyntaxTreeDiagnostics()
 	{
-		DiagnosticMessage[] diagnostics = SyntaxTrees
+		Diagnostic[] diagnostics = SyntaxTrees
 			.Where(x => x.HasDiagnostics)
 			.SelectMany(x => x.GetDiagnostics())
 			.ToArray();
@@ -200,7 +218,7 @@ public sealed class Compilation
 		return diagnostics;
 	}
 
-	public struct Builder : IBuilder<Compilation>
+	public sealed class Builder : IBuilder<Compilation>
 	{
 		private List<SyntaxTree>? _trees;
 
@@ -285,7 +303,7 @@ public sealed class Compilation
 			return this;
 		}
 
-		public readonly Compilation Build()
+		public Compilation Build()
 		{
 			return new(_assemblyName, _options ?? CompilationOptions.Default, _trees ?? [], _references ?? []); 
 		}

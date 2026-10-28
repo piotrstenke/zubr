@@ -117,7 +117,7 @@ public sealed class ProjectLoader
 
 	private void LogDiagnostics(EmitResult result)
 	{
-		foreach (DiagnosticMessage diag in result.Diagnostics)
+		foreach (Diagnostic diag in result.Diagnostics)
 		{
 			switch (diag.Severity)
 			{

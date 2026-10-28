@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using Zubr.Collections;
 using Zubr.Diagnostics;
 
 namespace Zubr.Parsing;
@@ -11,22 +11,22 @@ internal struct Lexer
 {
 	private readonly SourceReader _reader;
 	private readonly StringBuilder _builder;
-	private List<InternalDiagnostic>? _errors;
-	private readonly List<int> _lineStartPositions;
+	private ArrayBuilder<InternalDiagnostic> _diagnostics;
+	private readonly ArrayBuilder<int> _lineStartPositions;
 
 	private int _tokenStartPos;
 
-	internal readonly bool HasErrors => _errors?.Count > 0;
+	internal readonly bool HasDiagnostics => !_diagnostics.IsEmpty;
 
-	internal Lexer(SourceReader reader) : this(reader, null)
+	internal Lexer(SourceReader reader) : this(reader, default)
 	{
 	}
 
-	internal Lexer(SourceReader reader, List<InternalDiagnostic>? diagnostics)
+	internal Lexer(SourceReader reader, ArrayBuilder<InternalDiagnostic> diagnostics)
 	{
 		_reader = reader;
 		_builder = new(32);
-		_errors = diagnostics;
+		_diagnostics = diagnostics;
 		_lineStartPositions = new(32)
 		{
 			0 // First line always start on position 1
@@ -39,9 +39,9 @@ internal struct Lexer
 		return ReadToken();
 	}
 
-	internal readonly List<InternalDiagnostic>? GetErrors()
+	internal readonly ArrayBuilder<InternalDiagnostic> GetDiagnostics()
 	{
-		return _errors;
+		return _diagnostics;
 	}
 
 	internal readonly int[] GetLineStartPositions()
@@ -894,9 +894,9 @@ internal struct Lexer
 
 	private void AddError(ErrorCode code)
 	{
-		_errors ??= new();
+		_diagnostics.Init();
 
-		_errors.Add(new InternalDiagnostic(code, _tokenStartPos));
+		_diagnostics.Add(new InternalDiagnostic(code, _tokenStartPos));
 	}
 
 	private static char GetEscapedChar(char c)

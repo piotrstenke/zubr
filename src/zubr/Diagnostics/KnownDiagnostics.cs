@@ -29,4 +29,45 @@ internal static class KnownDiagnostics
 	{
 		return _codes.TryGetValue(code, out message);
 	}
+
+	public static DiagnosticSeverity GetSeverity(ErrorCode code)
+	{
+		string str = code.ToString();
+
+		if(str.StartsWith("ERR_"))
+		{
+			return DiagnosticSeverity.Error;
+		}
+
+		if(str.StartsWith("WARN_"))
+		{
+			return DiagnosticSeverity.Warning;
+		}
+
+		return DiagnosticSeverity.Hidden;
+	}
+
+	public static string FormatCode(ErrorCode code)
+	{
+		const string PREFIX = "ZR";
+
+		int value = (int)code;
+
+		if (value < 10)
+		{
+			return $"{PREFIX}000{value}";
+		}
+
+		if (value < 100)
+		{
+			return $"{PREFIX}00{value}";
+		}
+
+		if (value < 1000)
+		{
+			return $"{PREFIX}0{value}";
+		}
+
+		return $"{PREFIX}{(int)code}";
+	}
 }

@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+﻿using Zubr.Collections;
 
 namespace Zubr.Declarations;
 
@@ -8,7 +8,7 @@ internal abstract class Declaration
 
 	public string Name { get; }
 
-	public ImmutableArray<Declaration> Children => GetChildrenCore();
+	public ConstArray<Declaration> Children => GetChildrenCore();
 
 	protected Declaration(string name, DeclarationKind kind)
 	{
@@ -16,5 +16,5 @@ internal abstract class Declaration
 		Kind = kind;
 	}
 
-	protected abstract ImmutableArray<Declaration> GetChildrenCore();
+	protected abstract ConstArray<Declaration> GetChildrenCore();
 }

@@ -92,11 +92,11 @@ static class Commands
 		Console.WriteLine($"Data written to file '{outputPath}'");
 	}
 
-	private static void WriteDiagnostics(DiagnosticMessage[] diagnostics)
+	private static void WriteDiagnostics(Diagnostic[] diagnostics)
 	{
 		Console.WriteLine();
 
-		foreach (DiagnosticMessage diagnostic in diagnostics)
+		foreach (Diagnostic diagnostic in diagnostics)
 		{
 			if (diagnostic.Location.IsDefault)
 			{

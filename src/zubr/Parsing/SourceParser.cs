@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using Zubr.Diagnostics;
 using Zubr.Syntax;
@@ -13,17 +12,17 @@ internal sealed class SourceParser
 	private readonly SyntaxTree _tree;
 	private int _current;
 
-	private List<InternalDiagnostic>? _diagnostics;
+	private DiagnosticBag _diagnostics;
 
-	internal SourceParser(SyntaxTree tree, Token[] tokens) : this(tree, tokens, null)
+	internal SourceParser(SyntaxTree tree, Token[] tokens) : this(tree, tokens, default)
 	{
 	}
 
-	internal SourceParser(SyntaxTree tree, Token[] tokens, List<InternalDiagnostic>? errors)
+	internal SourceParser(SyntaxTree tree, Token[] tokens, DiagnosticBag diagnostics)
 	{
 		_tree = tree;
 		_tokens = tokens;
-		_diagnostics = errors;
+		_diagnostics = diagnostics;
 	}
 
 	public CompilationUnitSyntax ParseCompilationUnit()
@@ -2292,7 +2291,7 @@ internal sealed class SourceParser
 		return new(_tree, span, openBrace, List(expressions), closeBrace);
 	}
 
-	internal List<InternalDiagnostic>? GetDiagnostics()
+	internal DiagnosticBag GetDiagnostics()
 	{
 		return _diagnostics;
 	}
@@ -2723,8 +2722,7 @@ internal sealed class SourceParser
 
 	private void AddError(ErrorCode code, int position)
 	{
-		_diagnostics ??= new();
-		_diagnostics.Add(new(code, position));
+		_diagnostics.Push(code, _tree.GetLocation(position));
 	}
 
 	private enum Precedence : uint

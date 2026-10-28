@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+﻿using Zubr.Collections;
 using Zubr.Diagnostics;
 using Zubr.Parsing;
 using Zubr.Syntax;
@@ -10,7 +8,7 @@ namespace Zubr;
 
 public sealed class SyntaxTree
 {
-	private DiagnosticMessage[]? _diagnostics;
+	private ConstArray<Diagnostic> _diagnostics;
 
 	private readonly int[] _lineStartPositions;
 
@@ -18,7 +16,7 @@ public sealed class SyntaxTree
 
 	public SourceText Source { get; }
 
-	public bool HasDiagnostics => _diagnostics is not null && _diagnostics.Length > 0;
+	public bool HasDiagnostics => !_diagnostics.IsDefaultOrEmpty;
 
 	private SyntaxTree(SourceText source, int[] lineStartPositions)
 	{
@@ -31,28 +29,28 @@ public sealed class SyntaxTree
 		return _root!;
 	}
 
-	public DiagnosticMessage[] GetDiagnostics()
+	public ConstArray<Diagnostic> GetDiagnostics()
 	{
-		return _diagnostics ?? Array.Empty<DiagnosticMessage>();
+		return _diagnostics.SelfOrEmpty();
 	}
 
 	public Location GetLocation(int position)
 	{
-		return GetLocation(new TextSpan(position, position));
-	}
-
-	public Location GetLocation(TextSpan span)
-	{
-		int line = GetLine(span.Start);
+		int line = GetLine(position);
 
 		if (line == -1)
 		{
 			return Location.None;
 		}
 
-		int column = Column(line, span.Start);
+		int column = Column(line, position);
 
 		return new(Source.Path ?? string.Empty, line, column, LocationKind.Source);
+	}
+
+	public Location GetLocation(TextSpan span)
+	{
+		return GetLocation(span.Start);
 	}
 
 	public Location GetLocation(in Token token)
@@ -70,7 +68,7 @@ public sealed class SyntaxTree
 		SourceReader reader = source.GetSourceReader();
 		Lexer lexer = new(reader);
 
-		List<Token> tokens = new(source.Length * 2);
+		ArrayBuilder<Token> tokens = new(source.Length * 2);
 
 		while (true)
 		{
@@ -84,15 +82,19 @@ public sealed class SyntaxTree
 			}
 		}
 
-		List<InternalDiagnostic>? diagnostics = lexer.GetErrors();
+		DiagnosticBag diagnostics = new();
+
 		SyntaxTree tree = new(source, lexer.GetLineStartPositions());
+
+		if (lexer.HasDiagnostics)
+		{
+			CollectDiagnostics(lexer, tree, diagnostics);
+		}
 
 		SourceParser parser = new(tree, tokens.ToArray(), diagnostics);
 		CompilationUnitSyntax root = parser.ParseCompilationUnit();
+		tree.AttachRoot(root, diagnostics);
 
-		diagnostics = parser.GetDiagnostics();
-
-		tree.AttachRoot(root, GetDiagnostics(diagnostics, tree));
 		return tree;
 	}
 
@@ -119,31 +121,20 @@ public sealed class SyntaxTree
 		return absolutePosition - lineStart;
 	}
 
-	private void AttachRoot(
-		CompilationUnitSyntax root,
-		DiagnosticMessage[]? diagnostics
-	)
+	private void AttachRoot(CompilationUnitSyntax root, DiagnosticBag diagnostics)
 	{
 		_root = root;
-		_diagnostics = diagnostics;
+		_diagnostics = diagnostics.ToConstArray();
 	}
 
-	[return: NotNullIfNotNull(nameof(diagnostics))]
-	private static DiagnosticMessage[]? GetDiagnostics(List<InternalDiagnostic>? diagnostics, SyntaxTree tree)
+	private static void CollectDiagnostics(in Lexer lexer, SyntaxTree tree, DiagnosticBag diagnostics)
 	{
-		if (diagnostics is null)
+		ArrayBuilder<InternalDiagnostic> errors = lexer.GetDiagnostics();
+
+		for (int i = 0; i < errors.Length; i++)
 		{
-			return null;
+			InternalDiagnostic diag = errors[i];
+			diagnostics.Push(diag.Code, tree.GetLocation(diag.Position));
 		}
-
-		DiagnosticMessage[] array = new DiagnosticMessage[diagnostics.Count];
-
-		for (int i = 0; i < diagnostics.Count; i++)
-		{
-			InternalDiagnostic diag = diagnostics[i];
-			array[i] = DiagnosticMessage.FromCode(diag.Code, tree.GetLocation(diag.Position));
-		}
-
-		return array;
 	}
 }

@@ -1,11 +1,12 @@
-﻿using System.Collections.Immutable;
+﻿using Zubr.Collections;
+using Zubr.Diagnostics;
 using Zubr.Text;
 
 namespace Zubr.Declarations;
 
 internal class SingleModuleDeclaration : SingleDeclaration
 {
-	private readonly ImmutableArray<SingleDeclaration> _children;
+	private readonly ConstArray<SingleDeclaration> _children;
 
 	public bool IsTop { get; }
 
@@ -13,8 +14,9 @@ internal class SingleModuleDeclaration : SingleDeclaration
  		string name,
 		SyntaxRef @ref,
 		Location nameLocation,
-		ImmutableArray<SingleDeclaration> children
-	) : this(name, @ref, nameLocation, false, children)
+		ConstArray<SingleDeclaration> children,
+		ConstArray<Diagnostic> diagnostics
+	) : this(name, @ref, nameLocation, false, children, diagnostics)
 	{
 	}
 
@@ -23,15 +25,16 @@ internal class SingleModuleDeclaration : SingleDeclaration
 		SyntaxRef @ref,
 		Location nameLocation,
 		bool isTop,
-		ImmutableArray<SingleDeclaration> children
-	) : base(DeclarationKind.Module, name, @ref, nameLocation)
+		ConstArray<SingleDeclaration> children,
+		ConstArray<Diagnostic> diagnostics
+	) : base(DeclarationKind.Module, name, @ref, nameLocation, diagnostics)
 	{
 		_children = children;
 
 		IsTop = isTop;
 	}
 
-	protected sealed override ImmutableArray<SingleDeclaration> GetChildren()
+	protected sealed override ConstArray<SingleDeclaration> GetChildren()
 	{
 		return _children;
 	}

@@ -89,7 +89,7 @@ public abstract class MetadataReference
 		}
 	}
 
-	public struct Builder<T> : IBuilder<T> where T : MetadataReference
+	public sealed class Builder<T> : IBuilder<T> where T : MetadataReference
 	{
 		private readonly Func<ReferenceOptions, T> _ctor;
 
@@ -183,7 +183,7 @@ public abstract class MetadataReference
 			return this;
 		}
 
-		public readonly T Build()
+		public T Build()
 		{
 			return _ctor(new(_aliases?.ToImmutableArray() ?? []));
 		}
@@ -193,13 +193,13 @@ public abstract class MetadataReference
 			return self.Build();
 		}
 
-		private readonly void AddAliases_Internal(string alias)
+		private void AddAliases_Internal(string alias)
 		{
 			ValidateAlias(alias);
 			_aliases!.Add(alias);
 		}
 
-		private readonly void ValidateAlias(string alias)
+		private void ValidateAlias(string alias)
 		{
 			ArgumentException.ThrowIfNullOrWhiteSpace(alias);
 

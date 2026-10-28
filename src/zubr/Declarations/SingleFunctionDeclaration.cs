@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using Zubr.Collections;
+using Zubr.Diagnostics;
 using Zubr.Text;
 
 namespace Zubr.Declarations;
@@ -16,14 +17,15 @@ internal sealed class SingleFunctionDeclaration : SingleDeclaration
 		int arity,
 		DeclarationModifiers modifiers,
 		SyntaxRef @ref,
-		Location nameLocation
-	) : base(DeclarationKind.Function, name, @ref, nameLocation)
+		Location nameLocation,
+		ConstArray<Diagnostic> diagnostics
+	) : base(DeclarationKind.Function, name, @ref, nameLocation, diagnostics)
 	{
 		_arity = (ushort)arity;
 		Modifiers = modifiers;
 	}
 
-	protected override ImmutableArray<SingleDeclaration> GetChildren()
+	protected override ConstArray<SingleDeclaration> GetChildren()
 	{
 		return [];
 	}

@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using Zubr.Collections;
+using Zubr.Diagnostics;
 using Zubr.Text;
 
 namespace Zubr.Declarations;
@@ -11,23 +12,27 @@ internal abstract class SingleDeclaration : Declaration
 
 	public Location NameLocation { get; }
 
-	public new ImmutableArray<SingleDeclaration> Children => GetChildren();
+	public new ConstArray<SingleDeclaration> Children => GetChildren();
+
+	public ConstArray<Diagnostic> Diagnostics { get; }
 
 	protected SingleDeclaration(
 		DeclarationKind kind,
 		string name,
 		SyntaxRef @ref,
-		Location nameLocation
+		Location nameLocation,
+		ConstArray<Diagnostic> diagnostics
 	) : base(name, kind)
 	{
 		Ref = @ref;
 		NameLocation = nameLocation;
+		Diagnostics = diagnostics;
 	}
 
-	protected sealed override ImmutableArray<Declaration> GetChildrenCore()
+	protected sealed override ConstArray<Declaration> GetChildrenCore()
 	{
-		return ImmutableArray<Declaration>.CastUp(GetChildren());
+		return ConstArray<Declaration>.CastUp(GetChildren());
 	}
 
-	protected abstract ImmutableArray<SingleDeclaration> GetChildren();
+	protected abstract ConstArray<SingleDeclaration> GetChildren();
 }

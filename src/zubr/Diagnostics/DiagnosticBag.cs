@@ -1,22 +1,18 @@
 ﻿using System.Collections.Generic;
+using Zubr.Collections;
 using Zubr.Text;
 
 namespace Zubr.Diagnostics;
 
-public readonly struct DiagnosticBag
+public struct DiagnosticBag
 {
-	private readonly List<DiagnosticMessage> _diagnostics;
+	private ArrayBuilder<Diagnostic> _diagnostics;
 
-	public int Count => _diagnostics.Count;
+	public readonly int Count => _diagnostics.Length;
 
 	public DiagnosticBag()
 	{
-		_diagnostics = new();
-	}
-
-	internal DiagnosticBag(List<DiagnosticMessage> diagnostics)
-	{
-		_diagnostics = diagnostics;
+		_diagnostics = default;
 	}
 
 	internal DiagnosticBag(int capacity)
@@ -26,21 +22,30 @@ public readonly struct DiagnosticBag
 
 	internal void Push(ErrorCode code, Location location)
 	{
-		_diagnostics.Add(DiagnosticMessage.FromCode(code, location));
+		Push(Diagnostic.Create(code, location));
 	}
 
-	public void Push(DiagnosticMessage diagnostic)
+	public void Push(Diagnostic diagnostic)
 	{
+		_diagnostics.Init();
+
 		_diagnostics.Add(diagnostic);
 	}
 
-	public void Push(IEnumerable<DiagnosticMessage> diagnostics)
+	public void Push(IEnumerable<Diagnostic> diagnostics)
 	{
+		_diagnostics.Init();
+
 		_diagnostics.AddRange(diagnostics);
 	}
 
-	public DiagnosticMessage[] GetDiagnostics()
+	public Diagnostic[] ToArray()
 	{
 		return _diagnostics.ToArray();
+	}
+
+	public ConstArray<Diagnostic> ToConstArray()
+	{
+		return _diagnostics.ToConstArray();
 	}
 }

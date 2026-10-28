@@ -1,11 +1,12 @@
-﻿using System.Collections.Immutable;
+﻿using Zubr.Collections;
+using Zubr.Diagnostics;
 using Zubr.Text;
 
 namespace Zubr.Declarations;
 
 internal sealed class SingleTypeDeclaration : SingleDeclaration
 {
-	private readonly ImmutableArray<SingleTypeDeclaration> _children;
+	private readonly ConstArray<SingleTypeDeclaration> _children;
 
 	private readonly ushort _arity;
 
@@ -20,16 +21,17 @@ internal sealed class SingleTypeDeclaration : SingleDeclaration
 		DeclarationModifiers modifiers,
 		SyntaxRef @ref,
 		Location nameLocation,
-		ImmutableArray<SingleTypeDeclaration> children
-	) : base(kind, name, @ref, nameLocation)
+		ConstArray<SingleTypeDeclaration> children,
+		ConstArray<Diagnostic> diagnostics
+	) : base(kind, name, @ref, nameLocation, diagnostics)
 	{
 		_children = children;
 		_arity = (ushort)arity;
 		Modifiers = modifiers;
 	}
 
-	protected override ImmutableArray<SingleDeclaration> GetChildren()
+	protected override ConstArray<SingleDeclaration> GetChildren()
 	{
-		return ImmutableArray<SingleDeclaration>.CastUp(_children);
+		return ConstArray<SingleDeclaration>.CastUp(_children);
 	}
 }

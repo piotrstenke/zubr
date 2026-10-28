@@ -1,5 +1,5 @@
-﻿using System.Collections.Immutable;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using Zubr.Collections;
 using Zubr.Diagnostics;
 using Zubr.Syntax;
 
@@ -22,7 +22,7 @@ internal sealed class DeclarationTreeBuilder : SyntaxVisitor<SingleDeclaration>
 
 	public override SingleDeclaration? VisitCompilationUnit(CompilationUnitSyntax node)
 	{
-		ImmutableArray<SingleDeclaration> children = GetModuleChildren(node.Members);
+		ConstArray<SingleDeclaration> children = GetModuleChildren(node.Members);
 		return CreateRoot(node, children);
 	}
 
@@ -30,7 +30,7 @@ internal sealed class DeclarationTreeBuilder : SyntaxVisitor<SingleDeclaration>
 	{
 		DiagnosticBag diagnostics = new();
 
-		ImmutableArray<SingleDeclaration> children = GetModuleChildren(node.Members);
+		ConstArray<SingleDeclaration> children = GetModuleChildren(node.Members);
 
 		// module top;
 		if (node.Name is null)
@@ -40,7 +40,8 @@ internal sealed class DeclarationTreeBuilder : SyntaxVisitor<SingleDeclaration>
 				node.GetReference(),
 				_tree.GetLocation(node.Top),
 				true,
-				children
+				children,
+				diagnostics.ToConstArray()
 			);
 		}
 
@@ -55,7 +56,8 @@ internal sealed class DeclarationTreeBuilder : SyntaxVisitor<SingleDeclaration>
 				current.GetReference(),
 				_tree.GetLocation(qualified.Right),
 				false,
-				children
+				children,
+				diagnostics.ToConstArray()
 			);
 
 			children = [declaration];
@@ -82,7 +84,8 @@ internal sealed class DeclarationTreeBuilder : SyntaxVisitor<SingleDeclaration>
 			current.GetReference(),
 			_tree.GetLocation(name),
 			false,
-			children
+			children,
+			diagnostics.ToConstArray()
 		);
 	}
 
@@ -114,7 +117,8 @@ internal sealed class DeclarationTreeBuilder : SyntaxVisitor<SingleDeclaration>
 			modifiers,
 			node.GetReference(),
 			_tree.GetLocation(node.Identifier),
-			[]
+			[],
+			diagnostics.ToConstArray()
 		);
 	}
 
@@ -131,7 +135,8 @@ internal sealed class DeclarationTreeBuilder : SyntaxVisitor<SingleDeclaration>
 			modifiers,
 			node.GetReference(),
 			_tree.GetLocation(node.Alias),
-			[]
+			[],
+			diagnostics.ToConstArray()
 		);
 	}
 
@@ -151,7 +156,8 @@ internal sealed class DeclarationTreeBuilder : SyntaxVisitor<SingleDeclaration>
 			node.Arity,
 			modifiers,
 			node.GetReference(),
-			_tree.GetLocation(node.Identifier)
+			_tree.GetLocation(node.Identifier),
+			diagnostics.ToConstArray()
 		);
 	}
 
@@ -165,7 +171,7 @@ internal sealed class DeclarationTreeBuilder : SyntaxVisitor<SingleDeclaration>
 		}
 
 		DeclarationModifiers modifiers = GetModifiers(node.Modifiers, diagnostics);
-		ImmutableArray<SingleTypeDeclaration> children = GetTypeChildren(node.Members);
+		ConstArray<SingleTypeDeclaration> children = GetTypeChildren(node.Members);
 
 		return new SingleTypeDeclaration(
 			kind,
@@ -174,22 +180,29 @@ internal sealed class DeclarationTreeBuilder : SyntaxVisitor<SingleDeclaration>
 			modifiers,
 			node.GetReference(),
 			_tree.GetLocation(node.Identifier),
-			children
+			children,
+			diagnostics.ToConstArray()
 		);
 	}
 
 	// Only inner types are retrieved in the declaration stage.
-	private ImmutableArray<SingleTypeDeclaration> GetTypeChildren(SyntaxList<MemberDeclarationSyntax> members)
+	private ConstArray<SingleTypeDeclaration> GetTypeChildren(SyntaxList<MemberDeclarationSyntax> members)
 	{
 		if (members.IsDefaultOrEmpty)
 		{
 			return [];
 		}
 
-		ImmutableArray<SingleTypeDeclaration>.Builder children = ImmutableArray.CreateBuilder<SingleTypeDeclaration>();
+		ArrayBuilder<SingleTypeDeclaration> children = new();
 
 		foreach (MemberDeclarationSyntax member in members)
 		{
+			// Type methods are not visited at this stage.
+			if(member is FunctionDeclarationSyntax)
+			{
+				continue;
+			}
+
 			SingleTypeDeclaration? declaration = Visit(member) as SingleTypeDeclaration;
 
 			if (declaration is not null)
@@ -198,17 +211,17 @@ internal sealed class DeclarationTreeBuilder : SyntaxVisitor<SingleDeclaration>
 			}
 		}
 
-		return children.DrainToImmutable();
+		return children.ToConstArray();
 	}
 
-	private ImmutableArray<SingleDeclaration> GetModuleChildren(SyntaxList<MemberDeclarationSyntax> members)
+	private ConstArray<SingleDeclaration> GetModuleChildren(SyntaxList<MemberDeclarationSyntax> members)
 	{
 		if(members.IsDefaultOrEmpty)
 		{
 			return [];
 		}
 
-		ImmutableArray<SingleDeclaration>.Builder children = ImmutableArray.CreateBuilder<SingleDeclaration>();
+		ArrayBuilder<SingleDeclaration> children = new(members.Count);
 
 		foreach (MemberDeclarationSyntax member in members)
 		{
@@ -220,10 +233,10 @@ internal sealed class DeclarationTreeBuilder : SyntaxVisitor<SingleDeclaration>
 			}
 		}
 
-		return children.DrainToImmutable();
+		return children.ToConstArray();
 	}
 
-	private static RootSingleModuleDeclaration CreateRoot(CompilationUnitSyntax root, ImmutableArray<SingleDeclaration> children)
+	private static RootSingleModuleDeclaration CreateRoot(CompilationUnitSyntax root, ConstArray<SingleDeclaration> children)
 	{
 		bool hasUses = false;
 		bool hasTopUses = false;
@@ -255,7 +268,8 @@ internal sealed class DeclarationTreeBuilder : SyntaxVisitor<SingleDeclaration>
 			root.GetReference(),
 			hasUses,
 			hasTopUses,
-			children
+			children,
+			diagnostics.ToConstArray()
 		);
 	}
 
