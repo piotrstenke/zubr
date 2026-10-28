@@ -117,12 +117,12 @@ public readonly struct SyntaxList<TNode> : IReadOnlyList<TNode> where TNode : Sy
 		return false;
 	}
 
-	public SyntaxNode First()
+	public TNode First()
 	{
 		return _nodes[0];
 	}
 
-	public SyntaxNode Last()
+	public TNode Last()
 	{
 		return _nodes[^1];
 	}
