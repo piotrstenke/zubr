@@ -10,6 +10,8 @@ public struct DiagnosticBag
 
 	public readonly int Count => _diagnostics.Length;
 
+	public readonly bool IsEmpty => Count == 0;
+
 	public DiagnosticBag()
 	{
 		_diagnostics = default;
@@ -30,6 +32,13 @@ public struct DiagnosticBag
 		_diagnostics.Init();
 
 		_diagnostics.Add(diagnostic);
+	}
+
+	public void Push(ConstArray<Diagnostic> diagnostics)
+	{
+		_diagnostics.Init(diagnostics.Length);
+
+		_diagnostics.AddRange(diagnostics);
 	}
 
 	public void Push(IEnumerable<Diagnostic> diagnostics)

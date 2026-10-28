@@ -1,25 +1,26 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Zubr.Collections;
 using Zubr.Diagnostics;
 
 namespace Zubr.Emit;
 
 public sealed class EmitResult
 {
-	private Diagnostic[]? _diagnostics;
+	private readonly ConstArray<Diagnostic> _diagnostics;
 
 	[MemberNotNullWhen(true, nameof(Data))]
 	public bool IsSuccess => Data is not null;
 
 	public byte[]? Data { get; }
 
-	public Diagnostic[] Diagnostics => _diagnostics ??= [];
+	public ConstArray<Diagnostic> Diagnostics => _diagnostics;
 
 	[MemberNotNullWhen(false, nameof(Data))]
-	public bool HasDiagnostics => _diagnostics is not null;
+	public bool HasDiagnostics => !_diagnostics.IsEmpty;
 
-	internal EmitResult(byte[]? data, Diagnostic[]? diagnostics)
+	internal EmitResult(byte[]? data, ConstArray<Diagnostic> diagnostics)
 	{
 		Data = data;
-		_diagnostics = diagnostics;
+		_diagnostics = diagnostics.SelfOrEmpty();
 	}
 }

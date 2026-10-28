@@ -111,6 +111,21 @@ public struct ArrayBuilder<T> : IList<T>, IReadOnlyList<T>, IBuilder<ConstArray<
 		}
 	}
 
+	public void AddRange(ConstArray<T> items)
+	{
+		if(items.IsDefaultOrEmpty)
+		{
+			return;
+		}
+
+		EnsureCapacity(_count + items.Length);
+
+		for (int i = 0; i < items.Length; i++)
+		{
+			_elements[_count++] = items[i];
+		}
+	}
+
 	public void AddRange(IEnumerable<T> items)
 	{
 		if(items.TryGetNonEnumeratedCount(out int count))
@@ -138,6 +153,11 @@ public struct ArrayBuilder<T> : IList<T>, IReadOnlyList<T>, IBuilder<ConstArray<
 	public void Init()
 	{
 		_elements ??= new T[DEFAULT_SIZE];
+	}
+
+	public void Init(int capacity)
+	{
+		_elements ??= new T[capacity];
 	}
 
 	public readonly bool Contains(T item)

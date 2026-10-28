@@ -10,9 +10,7 @@ namespace Zubr;
 
 public sealed class Compilation
 {
-	private Diagnostic[]? _diagnostics;
-	private bool _hasCheckedDiagnostics;
-	private bool _hasErrors;
+	private ConstArray<Diagnostic> _diagnostics;
 
 	public IEnumerable<SyntaxTree> SyntaxTrees { get; }
 
@@ -26,19 +24,13 @@ public sealed class Compilation
 	{
 		get
 		{
-			if (_diagnostics is not null)
+			if (!_diagnostics.IsDefaultOrEmpty)
 			{
 				return true;
 			}
 
-			if (_hasCheckedDiagnostics)
-			{
-				return false;
-			}
-
-			InitDiagnostics();
-
-			return _diagnostics is not null;
+			FetchDiagnostics();
+			return !_diagnostics.IsEmpty;
 		}
 	}
 
@@ -46,18 +38,13 @@ public sealed class Compilation
 	{
 		get
 		{
-			if (_hasErrors)
+			if (!_diagnostics.IsDefaultOrEmpty)
 			{
-				return true;
+				return HasErrorDiagnostics();
 			}
 
-			if (_hasCheckedDiagnostics)
-			{
-				return false;
-			}
-
-			InitDiagnostics();
-			return _hasErrors;
+			FetchDiagnostics();
+			return HasErrorDiagnostics();
 		}
 	}
 
@@ -74,22 +61,16 @@ public sealed class Compilation
 		Options = options;
 	}
 
-	public Diagnostic[] GetDiagnostics()
+	public ConstArray<Diagnostic> GetDiagnostics()
 	{
-		if (_diagnostics is not null)
+		// The diagnostics were already fetched.
+		if(!_diagnostics.IsDefault)
 		{
-			return _diagnostics.ToArray();
+			return _diagnostics;
 		}
 
-		Diagnostic[] diagnostics = FetchSyntaxTreeDiagnostics();
-
-		if (diagnostics.Length == 0)
-		{
-			return diagnostics;
-		}
-
-		_diagnostics = diagnostics;
-		return _diagnostics.ToArray();
+		FetchDiagnostics();
+		return _diagnostics;
 	}
 
 	public EmitResult Emit()
@@ -177,11 +158,50 @@ public sealed class Compilation
 		return new(this);
 	}
 
-	private void AnalyzeTrees()
+	private bool HasErrorDiagnostics()
+	{
+		return _diagnostics.Any(x => x.Severity == DiagnosticSeverity.Error);
+	}
+
+	private void FetchDiagnostics()
+	{
+		DiagnosticBag diagnostics = new();
+
+		FetchSyntaxTreeDiagnostics(diagnostics);
+
+		AnalyzeTrees(diagnostics);
+
+		if (!diagnostics.IsEmpty)
+		{
+			return;
+		}
+
+		_diagnostics = diagnostics.ToConstArray();
+
+		void FetchSyntaxTreeDiagnostics(DiagnosticBag diagnostics)
+		{
+			foreach (SyntaxTree tree in SyntaxTrees)
+			{
+				if(!tree.HasDiagnostics)
+				{
+					continue;
+				}
+
+				diagnostics.Push(tree.GetDiagnostics());
+			}
+		}
+	}
+
+	private void AnalyzeTrees(DiagnosticBag diagnostics)
 	{
 		foreach (SyntaxTree tree in SyntaxTrees)
 		{
-			Analyze(tree);
+			ConstArray<Diagnostic> array = Analyze(tree);
+
+			if(!array.IsDefaultOrEmpty)
+			{
+				diagnostics.Push(array);
+			}
 		}
 	}
 
@@ -189,33 +209,6 @@ public sealed class Compilation
 	{
 		RootSingleModuleDeclaration root = DeclarationTreeBuilder.Build(tree);
 		return root.Diagnostics;
-	}
-
-	private void InitDiagnostics()
-	{
-		Diagnostic[] diagnostics = FetchSyntaxTreeDiagnostics();
-
-		AnalyzeTrees();
-
-		if (diagnostics.Length == 0)
-		{
-			return;
-		}
-
-		_diagnostics = diagnostics;
-	}
-
-	private Diagnostic[] FetchSyntaxTreeDiagnostics()
-	{
-		Diagnostic[] diagnostics = SyntaxTrees
-			.Where(x => x.HasDiagnostics)
-			.SelectMany(x => x.GetDiagnostics())
-			.ToArray();
-
-		_hasCheckedDiagnostics = true;
-		_hasErrors = diagnostics.Any(x => x.Severity == DiagnosticSeverity.Error);
-
-		return diagnostics;
 	}
 
 	public sealed class Builder : IBuilder<Compilation>

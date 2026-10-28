@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using Zubr;
+using Zubr.Collections;
 using Zubr.Diagnostics;
 using Zubr.Emit;
 using Zubr.Logging;
@@ -90,7 +91,7 @@ static class Commands
 		Console.WriteLine($"Data written to file '{outputPath}'");
 	}
 
-	private static void WriteDiagnostics(Diagnostic[] diagnostics)
+	private static void WriteDiagnostics(ConstArray<Diagnostic> diagnostics)
 	{
 		Console.WriteLine();
 
