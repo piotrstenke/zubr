@@ -1,0 +1,26 @@
+***
+
+self.metadata =
+{
+	name = "zubr",
+	desc = "This is a sample Zubr package",
+	tags = { "zubr", },
+	version = "0.0.1-alpha",
+	authors = { "Zubr Team" },
+	url = null,
+	license = "MIT",
+};
+
+self.build = 
+{
+	target = "zubr1",
+	outputPath = "out",
+	assemblyName = "zubr"
+};
+
+self.dependencies =
+{
+	dev("math:1.0.0"),
+};
+
+***

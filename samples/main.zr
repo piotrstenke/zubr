@@ -1,0 +1,9 @@
+top use { print } from zubr;
+top use { path } from zubr.io;
+
+use { hello as h, what } from zubr as zubr;
+
+fn main(): int32
+{
+	return 1;
+}

@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="LICENSE.txt" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/samples/">
+    <File Path="samples/main.zr" />
+    <File Path="samples/_package.zr" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/zubr/zubr.csproj" />
+    <Project Path="src/zubrbuild/zubrbuild.csproj" Id="b29c2b8d-c539-476f-a2c8-bace4cbc593a" />
+    <Project Path="src/zubrcli/zubrcli.csproj" Id="fc6dba4c-5134-46f8-91a2-df0dc9eeb29d" />
+    <Project Path="src/zubrlib/zubrlib.csproj" Id="83d1069b-4584-4001-98cf-ee8fae0ac172" />
+  </Folder>
+</Solution>
