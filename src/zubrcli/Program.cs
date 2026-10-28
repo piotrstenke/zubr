@@ -13,8 +13,6 @@ app.Add("build", Commands.Build);
 
 await app.RunAsync(args);
 
-Console.ReadKey();
-
 static class Commands
 {
 	/// <summary>
