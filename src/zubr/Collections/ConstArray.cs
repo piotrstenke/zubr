@@ -20,7 +20,7 @@ public readonly struct ConstArray<T> : IReadOnlyList<T>, IEquatable<ConstArray<T
 
 	public bool IsDefault => _elements is null;
 
-	public bool IsDefaultOrEmpty => IsDefault || IsDefaultOrEmpty;
+	public bool IsDefaultOrEmpty => IsDefault || IsEmpty;
 
 	public int Length => _elements.Length;
 
